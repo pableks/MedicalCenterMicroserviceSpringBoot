@@ -1,45 +1,95 @@
 package com.example.medicalmicroservice.controller;
 
-import com.example.medicalmicroservice.dto.MedicalRecordDto;
-import com.example.medicalmicroservice.dto.PatientDto;
+
+import com.example.medicalmicroservice.model.Patient;
+import com.example.medicalmicroservice.model.User;
 import com.example.medicalmicroservice.service.PatientService;
+import com.example.medicalmicroservice.util.SessionUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/patients")
+@RequestMapping("/patients")
 public class PatientController {
+    private static final Logger log = LoggerFactory.getLogger(PatientController.class);
 
-    private final PatientService patientService;
-
-    public PatientController(PatientService patientService) {
-        this.patientService = patientService;
-        createMockupPatients();
-    }
-
-    private void createMockupPatients() {
-        MedicalRecordDto medicalRecord1 = new MedicalRecordDto(1, "MR-001", LocalDate.now(), "Diagnosis 1", "Treatment 1");
-        MedicalRecordDto medicalRecord2 = new MedicalRecordDto(2, "MR-002", LocalDate.now(), "Diagnosis 2", "Treatment 2");
-        MedicalRecordDto medicalRecord3 = new MedicalRecordDto(3, "MR-003", LocalDate.now(), "Diagnosis 3", "Treatment 3");
-
-        PatientDto patient1 = new PatientDto(1L, "John", "Doe", LocalDate.of(1990, 1, 1), "john@example.com", "+1234567890", medicalRecord1);
-        PatientDto patient2 = new PatientDto(2L,"Jane", "Smith", LocalDate.of(1985, 5, 10), "jane@example.com", "+9876543210", medicalRecord2);
-        PatientDto patient3 = new PatientDto(3L,"Mike", "Johnson", LocalDate.of(1980, 12, 15), "mike@example.com", "+5555555555", medicalRecord3);
-
-        patientService.createPatient(patient1);
-        patientService.createPatient(patient2);
-        patientService.createPatient(patient3);
-    }
+    @Autowired
+    private PatientService patientService;
 
     @GetMapping
-    public ResponseEntity<List<PatientDto>> getAllPatients() {
-        List<PatientDto> patients = patientService.getAllPatients();
-        return new ResponseEntity<>(patients, HttpStatus.OK);
+    public ResponseEntity<Object> getAllPatients() {
+        User currentUser = SessionUtil.getUserFromSession();
+        if (currentUser != null && currentUser.getRole().equals("doctor")) {
+            List<Patient> patients = patientService.getAllPatients();
+            return ResponseEntity.ok(patients);
+        }
+        log.error("Access denied. Only doctors can view all patients.");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponse("Access denied. Only doctors can view all patients."));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Object> getPatientById(@PathVariable Long id) {
+        User currentUser = SessionUtil.getUserFromSession();
+        if (currentUser != null) {
+            if (currentUser.getRole().equals("doctor")) {
+                Patient patient = patientService.getPatientById(id);
+                if (patient != null) {
+                    return ResponseEntity.ok(patient);
+                }
+                log.error("Patient not found with ID {}", id);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ErrorResponse("Patient not found with ID " + id));
+            } else if (currentUser.getRole().equals("patient")) {
+                Patient patient = patientService.getPatientByUserId(currentUser.getId());
+                if (patient != null && patient.getId().equals(id)) {
+                    return ResponseEntity.ok(patient);
+                }
+            }
+        }
+        log.error("Access denied. You are not authorized to view this patient.");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponse("Access denied. You are not authorized to view this patient."));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Object> updatePatient(@PathVariable Long id, @RequestBody Patient patient) {
+        User currentUser = SessionUtil.getUserFromSession();
+        if (currentUser != null && currentUser.getRole().equals("patient")) {
+            Patient existingPatient = patientService.getPatientByUserId(currentUser.getId());
+            if (existingPatient != null && existingPatient.getId().equals(id)) {
+                patient.setId(id);
+                Patient updatedPatient = patientService.updatePatient(patient);
+                if (updatedPatient != null) {
+                    return ResponseEntity.ok(updatedPatient);
+                }
+                log.error("Error updating patient with ID {}", id);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(new ErrorResponse("Error updating patient with ID " + id));
+            }
+        }
+        log.error("Access denied. You are not authorized to update this patient.");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponse("Access denied. You are not authorized to update this patient."));
+    }
+
+    // Other patient-related methods
+
+    static class ErrorResponse {
+        private final String message;
+
+        public ErrorResponse(String message) {
+            this.message = message;
+        }
+
+        public String getMessage() {
+            return message;
+        }
     }
 }
