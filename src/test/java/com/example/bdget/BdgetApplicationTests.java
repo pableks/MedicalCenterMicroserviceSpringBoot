@@ -1,10 +1,10 @@
-package com.example.medicalmicroservice;
+package com.example.bdget;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class MedicalmicroserviceApplicationTests {
+class BdgetApplicationTests {
 
 	@Test
 	void contextLoads() {
