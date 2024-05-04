@@ -1,0 +1,13 @@
+version: '1'
+services:
+  microcentrosalud:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      - spring.datasource.url=jdbc:oracle:thin:@tqtd6ljyl37elly3_tp?TNS_ADMIN=/app/oracle_wallet/
+      - spring.datasource.username=TestingM
+      - spring.datasource.password=OracleCloud123
+    restart: always
