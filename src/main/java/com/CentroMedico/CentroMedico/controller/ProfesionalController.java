@@ -87,25 +87,25 @@ public class ProfesionalController {
         }
     }
 
-    @PostMapping("/profesionales")
+    @PostMapping()
     public ResponseEntity<Object> createProfesional(@RequestBody Profesional profesional) {
-        List<Profesional> listaprofesional = profesionalService.getAllProfesionales();
-        for (Profesional p : listaprofesional) {
-            if (p.getRut().equals(profesional.getRut())) {
-                log.error("El profesional ya existe con el RUT {}", profesional.getRut());
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ErrorResponse("El profesional ya existe con el ID " + profesional.getRut()));
-            }
-        }
+        // Assuming profesional comes with an especialidad id to be linked or verified
+        Especialidad especialidad = especialidadService.getEspecialidadById(profesional.getEspecialidad().getIdes())
+                .orElseThrow(() -> new ResourceNotFoundException("Especialidad not found"));
 
+        profesional.setEspecialidad(especialidad); // Set the fetched especialidad
         Profesional createdProfesional = profesionalService.createProfesional(profesional);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
                 .buildAndExpand(createdProfesional.getIdprof()).toUri();
-        return ResponseEntity.created(location).body(createdProfesional);
+
+        EntityModel<Profesional> profesionalModel = EntityModel.of(createdProfesional);
+        profesionalModel.add(
+                linkTo(methodOn(this.getClass()).getProfesionalById(createdProfesional.getIdprof())).withSelfRel());
+        profesionalModel.getContent().setEspecialidad(especialidad); // Make sure especialidad data is fully set,
+                                                                     // including nombre
+
+        return ResponseEntity.created(location).body(profesionalModel);
     }
-
-
-
 
     @GetMapping("/especialidades/{id}")
     public EntityModel<Especialidad> getEspecialidadById(@PathVariable Long id) {
@@ -172,7 +172,7 @@ public class ProfesionalController {
         Profesional profesional = optionalProfesional.get();
         profesional.setNombres(profesionalDetails.getNombres());
         profesional.setApellidos(profesionalDetails.getApellidos());
-      
+
         profesional = profesionalService.updateProfesional(profesional); // Asegúrate de que el servicio devuelve el
                                                                          // profesional actualizado
 
@@ -183,27 +183,26 @@ public class ProfesionalController {
     }
 
     @DeleteMapping("/{id}")
-public ResponseEntity<?> deleteProfesional(@PathVariable Long id) {
-    Optional<Profesional> optionalProfesional = profesionalService.getProfesionalById(id);
-
-    if (!optionalProfesional.isPresent()) {
-        log.error("Attempt to delete non-existing professional with ID: {}", id);
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new ErrorResponse("Professional not found with ID: " + id));
+    public ResponseEntity<?> deleteProfesional(@PathVariable Long id) {
+        Optional<Profesional> optionalProfesional = profesionalService.getProfesionalById(id);
+    
+        if (!optionalProfesional.isPresent()) {
+            log.error("Intento de eliminar un profesional no existente con ID: {}", id);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse("Profesional no encontrado con ID: " + id));
+        }
+    
+        try {
+            profesionalService.deleteProfesional(id);
+            log.info("Profesional eliminado exitosamente con ID: {}", id);
+            return ResponseEntity.ok().body(new ErrorResponse("Profesional eliminado exitosamente."));
+        } catch (DataIntegrityViolationException e) {
+            log.error("Falló la eliminación del profesional con ID: {} debido a problemas de integridad de datos.", id);
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new ErrorResponse("No se puede eliminar el profesional ya que está vinculado con otros registros."));
+        }
     }
-
-    try {
-        profesionalService.deleteProfesional(id);
-        log.info("Professional deleted successfully with ID: {}", id);
-        return ResponseEntity.ok().body(new ErrorResponse("Professional successfully deleted."));
-    } catch (DataIntegrityViolationException e) {
-        log.error("Failed to delete professional with ID: {} due to data integrity issues.", id);
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(new ErrorResponse("Cannot delete professional as it is linked with other records."));
-    }
-}
-
-
+    
 
     static class ErrorResponse {
         private final String message;

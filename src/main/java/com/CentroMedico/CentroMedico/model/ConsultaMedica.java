@@ -32,7 +32,7 @@ public class ConsultaMedica {
     @Column(name = "fechaconsulta")
     private LocalDate fechaconsulta;
 
-    @Column(columnDefinition = "TIME")
+    @Column(columnDefinition = "TIMESTAMP")
     private LocalTime horario;
 
     @ManyToOne(fetch = FetchType.EAGER)
