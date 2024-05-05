@@ -1,3 +1,4 @@
-/Users/pablojavier/Documents/Study/Entregas Examen /Ejemplos/consultamedica-main/src/test/java/com/centrosalud/centrosalud/CentrosaludApplicationTests.java
-/Users/pablojavier/Documents/Study/Entregas Examen /Ejemplos/consultamedica-main/src/test/java/com/centrosalud/centrosalud/repository/PacienteServiceTest.java
-/Users/pablojavier/Documents/Study/Entregas Examen /Ejemplos/consultamedica-main/src/test/java/com/centrosalud/centrosalud/service/ProfesionalServiceTest.java
+/Users/pablojavier/Documents/Study/Entregas Examen /Ejemplos/centromedico/src/test/java/com/CentroMedico/CentroMedico/CentroMedicoApplicationTests.java
+/Users/pablojavier/Documents/Study/Entregas Examen /Ejemplos/centromedico/src/test/java/com/CentroMedico/CentroMedico/repository/PacienteServiceTest.java
+/Users/pablojavier/Documents/Study/Entregas Examen /Ejemplos/centromedico/src/test/java/com/CentroMedico/CentroMedico/service/ProfesionalServiceTest.java
+/Users/pablojavier/Documents/Study/Entregas Examen /Ejemplos/centromedico/src/test/java/com/CentroMedico/CentroMedico/controller/PacienteControllerTest.java

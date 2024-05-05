@@ -1,6 +1,6 @@
 version: '1'
 services:
-  microcentrosalud:
+  centromedico:
     build:
       context: .
       dockerfile: Dockerfile

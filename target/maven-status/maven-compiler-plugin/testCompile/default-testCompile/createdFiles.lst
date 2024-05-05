@@ -1,3 +1,4 @@
-com/centrosalud/centrosalud/CentrosaludApplicationTests.class
-com/centrosalud/centrosalud/service/ProfesionalServiceTest.class
-com/centrosalud/centrosalud/repository/PacienteServiceTest.class
+com/CentroMedico/CentroMedico/controller/PacienteControllerTest.class
+com/CentroMedico/CentroMedico/service/ProfesionalServiceTest.class
+com/CentroMedico/CentroMedico/repository/PacienteServiceTest.class
+com/CentroMedico/CentroMedico/CentroMedicoApplicationTests.class
